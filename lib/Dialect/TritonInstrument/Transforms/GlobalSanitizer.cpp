@@ -12,6 +12,8 @@
 
 #include <algorithm>
 
+namespace ttg = mlir::triton::gpu;
+
 namespace mlir {
 namespace triton {
 namespace instrument {
@@ -22,6 +24,8 @@ namespace instrument {
 namespace {
 
 static constexpr const char kGSanGlobalStateArgAttr[] = "tti.gsan_global_state";
+static constexpr const char kDisableSetMaxRegisterAttr[] =
+    "tti.disable_setmaxregister";
 
 class GlobalSanitizerPass
     : public impl::TritonInstrumentGlobalSanitizerBase<GlobalSanitizerPass> {
@@ -92,6 +96,10 @@ public:
       OpBuilder b(op);
       ExperimentalGSanTensorAccessOp::create(b, op.getLoc(), op.getPtr(),
                                              op.getMask(), /*isStore=*/true);
+    });
+
+    module.walk([&](ttg::WarpSpecializeOp op) {
+      op->setAttr(kDisableSetMaxRegisterAttr, builder.getUnitAttr());
     });
   }
 };
